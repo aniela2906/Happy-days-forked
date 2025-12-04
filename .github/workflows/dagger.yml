@@ -1,30 +1,63 @@
-name: Run Dagger pipeline
+name: Dagger CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  dagger:
-    name: Run Dagger pipeline
+  build-and-deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
+        
+      # --- DVC AND PYTHON SETUP ON THE GA RUNNER (SHELL) ---
+      
+      - name: Setup Python on Runner
+        uses: actions/setup-python@v5
         with:
-          go-version: 1.25.4
-          cache: false
+          python-version: '3.12'
 
-      - name: Run Dagger pipeline
-        uses: dagger/dagger-for-github@v8.2.0
+      - name: Install DVC and Dependencies (SHELL)
+        run: |
+          # Install DVC globally on the GitHub Actions runner
+          pip install dvc
+          
+      - name: DVC Pull Data (SHELL)
+        working-directory: go/python-files/ # DVC works best when run from the dir containing .dvc
+        # This fetches raw_data.csv into the artifacts folder on the runner's filesystem
+        run: |
+          dvc pull
+          
+      # --- DAGGER EXECUTION ---
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          workdir: go
-          verb: run
-          args: go run pipeline.go
-          version: "0.19.6"
+          go-version: '1.22' 
+
+      - name: Install Dagger CLI
+        run: |
+          curl -L https://dl.dagger.io/dagger/install.sh | sh
+          
+      - name: Execute Dagger Pipeline (Go program)
+        working-directory: go/
+        # Dagger runs, mounts the *local* (now complete with data) python-files folder, 
+        # executes train_model.py, and exports the 'model' artifact.
+        run: |
+          go mod tidy
+          dagger call build
+          
+      # --- FINAL ARTIFACT UPLOAD (CRITICAL REQUIREMENT) ---
+
+      - name: Upload Model Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model
+          path: model/  # This directory was created by the 'dagger call build' step
+          if-no-files-found: error

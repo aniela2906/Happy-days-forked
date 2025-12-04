@@ -1,0 +1,9 @@
+# go/python-files/requirements.txt
+pandas
+numpy
+scikit-learn
+xgboost
+mlflow
+joblib
+scipy
+# Add any other missing libraries if they appear later
