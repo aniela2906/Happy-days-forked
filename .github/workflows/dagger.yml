@@ -63,7 +63,7 @@ jobs:
         # installs Python requirements, runs train_model.py, and exports the 'model' folder.
         run: |
           go mod tidy
-          dagger call build
+          $HOME/.dagger/bin/dagger call build
           
       # --- FINAL ARTIFACT UPLOAD (CRITICAL REQUIREMENT) ---
 
