@@ -351,8 +351,8 @@ if __name__ == "__main__":
         # 3. Model Selection and Deployment
         model_selection_and_deploy(experiment_name)
         
-        print("\n✅ Dagger Pipeline (train_model.py) finished successfully.")
+        print(" Dagger Pipeline (train_model.py) finished successfully.")
 
     except Exception as e:
-        print(f"\n❌ An unrecoverable error occurred: {e}", file=sys.stderr)
+        print(f"An unrecoverable error occurred: {e}", file=sys.stderr)
         sys.exit(1)
