@@ -27,21 +27,25 @@ jobs:
         run: |
           # Install DVC globally on the GitHub Actions runner
           pip install dvc
-          
-      - name: DVC Pull Data (SHELL)
-        working-directory: notebooks/ # DVC works best when run from the dir containing .dvc
-        # This fetches raw_data.csv into the artifacts folder on the runner's filesystem
+
+      - name: DVC Pull Data and Copy to Dagger Source
+        working-directory: notebooks/ # CRITICAL: Run DVC from its configuration root
         run: |
+          # 1. Execute DVC pull
           dvc pull
-          
-      # --- DAGGER EXECUTION ---
+
+          # 2. Copy the pulled data from notebooks/artifacts to go/python-files/artifacts
+          mkdir -p ../go/python-files/artifacts
+          cp -r artifacts/. ../go/python-files/artifacts/
+
+      # --- DAGGER EXECUTION SETUP ---
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22' 
 
-     - name: Install Dagger CLI
+      - name: Install Dagger CLI
         run: |
           # Install Dagger CLI
           curl -L https://dl.dagger.io/dagger/install.sh | sh
@@ -63,5 +67,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: model
-          path: model/  # This directory was created by the 'dagger call build' step
+          path: model/
           if-no-files-found: error
