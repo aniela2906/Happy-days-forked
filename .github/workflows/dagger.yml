@@ -47,15 +47,9 @@ jobs:
           go-version: '1.22' 
 
       - name: Install Dagger CLI
-        # Return to the shell installation but use GitHub's environment file 
-        # to ensure the path persists across steps.
+        # FIX: Force Dagger binary into a guaranteed PATH location (/usr/local/bin)
         run: |
-          # Install Dagger CLI
-          curl -L https://dl.dagger.io/dagger/install.sh | sh
-          
-          # CRITICAL FIX: Add the installation directory to the runner's PATH 
-          # using the official GitHub environment file method.
-          echo "$HOME/.dagger/bin" >> $GITHUB_PATH
+          curl -L https://dl.dagger.io/dagger/install.sh | sh -s -- --bin /usr/local/bin/
         
       - name: Execute Dagger Pipeline (Go program)
         working-directory: go/
@@ -63,7 +57,7 @@ jobs:
         # installs Python requirements, runs train_model.py, and exports the 'model' folder.
         run: |
           go mod tidy
-          $HOME/.dagger/bin/dagger call build
+          dagger call build
           
       # --- FINAL ARTIFACT UPLOAD (CRITICAL REQUIREMENT) ---
 
