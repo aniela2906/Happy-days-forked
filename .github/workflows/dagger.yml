@@ -1,15 +1,14 @@
-name: Dagger CI/CD Pipeline
+name: Run Dagger pipeline
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch: # Allows manual trigger, as per instructions
 
 jobs:
-  build-and-deploy:
+  dagger:
+    name: Run Dagger pipeline
     runs-on: ubuntu-latest
     
     steps:
@@ -25,11 +24,10 @@ jobs:
 
       - name: Install DVC and Dependencies (SHELL)
         run: |
-          # Install DVC on the runner for the data pull step
           pip install dvc
 
       - name: DVC Pull Data and Copy to Dagger Source
-        working-directory: notebooks/ # CRITICAL: Run DVC from its configuration root
+        working-directory: notebooks/ # We run from the DVC root
         run: |
           # 1. Execute DVC pull
           dvc pull
@@ -39,31 +37,24 @@ jobs:
           mkdir -p ../go/python-files/artifacts
           cp -r artifacts/. ../go/python-files/artifacts/
 
-      # --- DAGGER EXECUTION SETUP ---
+      # --- DAGGER EXECUTION (Using the Official Action) ---
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: Run Dagger Pipeline
+        # This action handles Dagger CLI installation and PATH configuration
+        uses: dagger/dagger-for-github@v8.2.0 
         with:
-          go-version: '1.22' 
-
-      - name: Install Dagger CLI
-        # FIX: Force Dagger binary into a guaranteed PATH location (/usr/local/bin)
-        run: |
-          curl -L https://dl.dagger.io/dagger/install.sh | sh -s -- --bin /usr/local/bin/
-        
-      - name: Execute Dagger Pipeline (Go program)
-        working-directory: go/
-        # This executes the pipeline.go, which sets up the container, 
-        # installs Python requirements, runs train_model.py, and exports the 'model' folder.
-        run: |
-          go mod tidy
-          dagger call build
+          workdir: go
+          verb: run
+          args: go run pipeline.go # Executes your main Go program
+          version: "0.19.6" # Use the specified version or 'latest'
           
       # --- FINAL ARTIFACT UPLOAD (CRITICAL REQUIREMENT) ---
 
+      # The dagger action successfully ran pipeline.go, which created the 'go/model' folder.
+      # We now upload that folder.
       - name: Upload Model Artifact
         uses: actions/upload-artifact@v4
         with:
           name: model
-          path: model/  # This directory was created by the 'dagger call build' step
+          path: go/model/ # Path must be relative to the repo root
           if-no-files-found: error
