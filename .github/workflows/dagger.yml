@@ -29,7 +29,7 @@ jobs:
           pip install dvc
           
       - name: DVC Pull Data (SHELL)
-        working-directory: go/python-files/ # DVC works best when run from the dir containing .dvc
+        working-directory: notebooks/ # DVC works best when run from the dir containing .dvc
         # This fetches raw_data.csv into the artifacts folder on the runner's filesystem
         run: |
           dvc pull
