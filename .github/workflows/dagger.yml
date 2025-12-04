@@ -47,8 +47,15 @@ jobs:
           go-version: '1.22' 
 
       - name: Install Dagger CLI
-        # FIX: Use 'go install' for reliable PATH management (prevents "command not found")
-        run: go install dagger.io/dagger/cmd/dagger@latest
+        # Return to the shell installation but use GitHub's environment file 
+        # to ensure the path persists across steps.
+        run: |
+          # Install Dagger CLI
+          curl -L https://dl.dagger.io/dagger/install.sh | sh
+          
+          # CRITICAL FIX: Add the installation directory to the runner's PATH 
+          # using the official GitHub environment file method.
+          echo "$HOME/.dagger/bin" >> $GITHUB_PATH
         
       - name: Execute Dagger Pipeline (Go program)
         working-directory: go/
