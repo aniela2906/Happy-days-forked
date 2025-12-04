@@ -25,7 +25,7 @@ jobs:
 
       - name: Install DVC and Dependencies (SHELL)
         run: |
-          # Install DVC globally on the GitHub Actions runner
+          # Install DVC on the runner for the data pull step
           pip install dvc
 
       - name: DVC Pull Data and Copy to Dagger Source
@@ -34,7 +34,8 @@ jobs:
           # 1. Execute DVC pull
           dvc pull
 
-          # 2. Copy the pulled data from notebooks/artifacts to go/python-files/artifacts
+          # 2. Copy the pulled data from the DVC artifact folder (notebooks/artifacts)
+          #    to the Dagger source folder (go/python-files/artifacts)
           mkdir -p ../go/python-files/artifacts
           cp -r artifacts/. ../go/python-files/artifacts/
 
@@ -46,17 +47,13 @@ jobs:
           go-version: '1.22' 
 
       - name: Install Dagger CLI
-        run: |
-          # Install Dagger CLI
-          curl -L https://dl.dagger.io/dagger/install.sh | sh
-          
-          # CRITICAL FIX: Add the installation directory to the runner's PATH
-          echo "$HOME/.dagger/bin" >> $GITHUB_PATH
-          
+        # FIX: Use 'go install' for reliable PATH management (prevents "command not found")
+        run: go install dagger.io/dagger/cmd/dagger@latest
+        
       - name: Execute Dagger Pipeline (Go program)
         working-directory: go/
-        # Dagger runs, mounts the *local* (now complete with data) python-files folder, 
-        # executes train_model.py, and exports the 'model' artifact.
+        # This executes the pipeline.go, which sets up the container, 
+        # installs Python requirements, runs train_model.py, and exports the 'model' folder.
         run: |
           go mod tidy
           dagger call build
@@ -67,5 +64,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: model
-          path: model/
+          path: model/  # This directory was created by the 'dagger call build' step
           if-no-files-found: error
