@@ -1,4 +1,4 @@
-name: Decoupled Train/Test Pipeline
+name: Train/Test Pipeline
 
 on:
   push:
@@ -39,16 +39,17 @@ jobs:
         with:
           go-version: '1.22' 
 
-      - name: Install Dagger CLI
-        # FINAL FIX: Use shell script to install binary and manually add its location to the PATH.
-        run: |
-          curl -L https://dl.dagger.io/dagger/install.sh | sh
-          echo "$HOME/.dagger/bin" >> $GITHUB_PATH
-
-      - name: Execute Dagger Training Pipeline (Build Artifact)
+      - name: Execute Dagger Training Pipeline (Final Attempt)
         working-directory: go/
-        # This executes the Go program, which runs train_model.py, saves artifacts, and logs.
+        #Combine install and run into a single shell session
         run: |
+          # 1. Install Dagger CLI locally
+          curl -L https://dl.dagger.io/dagger/install.sh | sh
+          
+          # 2. Add the installation directory to the current shell's PATH
+          export PATH="$HOME/.dagger/bin:$PATH"
+          
+          # 3. Execute the commands (dagger is guaranteed to be found now)
           go mod tidy
           dagger call build
           
