@@ -10,7 +10,7 @@ import pandas as pd
 import joblib
 from sklearn.metrics import accuracy_score 
 from mlflow.tracking.client import MlflowClient
-from mlflow.entities.model_registry.model_version_status import ModelVersionStatus
+from mlflow.entities.model_registry.model_version.status import ModelVersionStatus
 from xgboost import XGBRFClassifier # Needed to load XGBoost model
 import numpy as np
 
@@ -94,25 +94,25 @@ def run_inference_test(expected_accuracy_threshold=0.75):
 def finalize_deployment():
     print("\n--- Starting Final MLflow Deployment Stage ---")
 
-    # Search MLflow for the best run that produced the required artifact
-    try:
-        # MLflow must be configured to point to the correct tracking server here.
-        # It relies on the environment variables set by the runner to find the experiment name.
-        experiment_ids = [mlflow.get_experiment_by_name(EXPERIMENT_NAME).experiment_id]
-        experiment_best = mlflow.search_runs(
-            experiment_ids=experiment_ids,
-            order_by=["metrics.f1_score DESC"],
-            max_results=1
-        ).iloc[0]
-    except Exception as e:
-        print(f"Error accessing MLflow experiment: {e}. Cannot deploy.")
+    # Retrieve Run ID from the environment variable set by the GitHub Action
+    run_id = os.environ.get('TRAINING_RUN_ID')
+    
+    if not run_id:
+        print("FATAL ERROR: TRAINING_RUN_ID environment variable not set. Cannot deploy.")
         sys.exit(1)
-
+        
+    # Skip the unreliable experiment search and use the RUN ID directly
     # 1. Register Best Model
-    run_id = experiment_best["run_id"]
+    # model_uri now uses the RUN ID directly
     model_uri = "runs:/{run_id}/{artifact_path}".format(run_id=run_id, artifact_path=ARTIFACT_PATH)
     
-    model_details = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
+    try:
+        model_details = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
+    except Exception as e:
+        # Catch registration errors cleanly
+        print(f"Error registering model with URI {model_uri}: {e}")
+        sys.exit(1)
+
     wait_until_ready(model_details.name, model_details.version)
     
     # 2. Transition to Staging
@@ -127,7 +127,8 @@ def finalize_deployment():
     )
     wait_for_deployment(MODEL_NAME, model_version, 'Staging')
     
-    print("\Model Promoted to Staging.")
+    #  Clean up the syntax warning 
+    print("\nModel Promoted to Staging.")
 
 if __name__ == "__main__":
     # The job runs this function. If run_inference_test() fails, the process exits (exit code 1).

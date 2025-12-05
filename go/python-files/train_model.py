@@ -267,6 +267,11 @@ def train_and_select_model(data, artifacts_dir):
             json.dump(model_results, results_file)
         
         print("--- Model Training Stage Complete ---")
+
+        #Write Run ID to a file in the artifacts directory
+        with open(os.path.join(artifacts_dir, "mlflow_run_id.txt"), "w") as f:
+            f.write(run.info.run_id)
+
         return experiment_name, run.info.run_id
 
 # --- 8. MAIN EXECUTION ---
