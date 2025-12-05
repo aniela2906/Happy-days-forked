@@ -74,6 +74,19 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+      # Save Python dependencies from cache
+      # This step checks if the dependencies defined in requirements.txt have been installed before.
+      - name: Cache Pip Dependencies
+        uses: actions/cache@v4
+        with:
+          # Caches the pip directory where packages are stored
+          path: ~/.cache/pip
+          # The key changes ONLY when the contents of requirements.txt changes.
+          key: ${{ runner.os }}-pip-${{ hashFiles('go/python-files/requirements.txt') }}
+          # Fallback keys for restoring partially matching caches
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Download Model Artifact
         uses: actions/download-artifact@v4
         with:
@@ -83,8 +96,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      # Install the dependencies from the requirements file
       - name: Install Test Dependencies
-        run: pip install pandas joblib mlflow scikit-learn xgboost numpy opentelemetry-exporter-otlp-proto-http
+          # If the cache hits (key is matched), this install runs in seconds.
+          # If the cache misses (requirements changed), it runs a full install and saves the new cache.
+        run: pip install -r go/python-files/requirements.txt
+
       # test_inference_and_deploy.py will now use the TRAINING_RUN_ID variable
       - name: Execute Inference Test and Deployment
         run: python go/python-files/test_inference_and_deploy.py
