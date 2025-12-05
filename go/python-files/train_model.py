@@ -17,7 +17,7 @@ import joblib
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from xgboost import XGBRFClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, f1_score
 from scipy.stats import uniform, randint
 
 # --- 3. MLFLOW/DEPLOYMENT LIBRARIES ---
