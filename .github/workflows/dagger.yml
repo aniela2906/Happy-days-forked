@@ -1,4 +1,4 @@
-name: MlOps Pipeline
+name: MLOps Pipeline
 
 on:
   push:
