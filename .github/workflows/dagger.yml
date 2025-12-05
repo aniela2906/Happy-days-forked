@@ -1,11 +1,11 @@
-name: Train/Test Pipeline
+name: Decoupled Train/Test Pipeline
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'go/**' # Workflow runs only when core code changes
+      - 'go/**'
       - '.github/workflows/**'
   workflow_dispatch:
 
@@ -34,24 +34,14 @@ jobs:
           cp -r artifacts/. ../go/python-files/artifacts/
 
       # --- Dagger Execution (Build Phase) ---
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      # This step replaces the multi-line install/run that was failing.
+      - name: Run Dagger Build Pipeline
+        uses: dagger/dagger-for-github@v8.2.0 
         with:
-          go-version: '1.22' 
-
-      - name: Execute Dagger Training Pipeline (Final Attempt)
-        working-directory: go/
-        #Combine install and run into a single shell session
-        run: |
-          # 1. Install Dagger CLI locally
-          curl -L https://dl.dagger.io/dagger/install.sh | sh
-          
-          # 2. Add the installation directory to the current shell's PATH
-          export PATH="$HOME/.dagger/bin:$PATH"
-          
-          # 3. Execute the commands (dagger is guaranteed to be found now)
-          go mod tidy
-          dagger call build
+          workdir: go # Run from the 'go' directory
+          verb: run
+          args: go run pipeline.go # Executes the Go program
+          version: "0.19.6" # Use the specific version to match instructions
           
       # --- Upload Artifact (DELIVERY) ---
       - name: Upload Model Artifact
@@ -60,32 +50,24 @@ jobs:
           name: model
           path: go/model/ 
 
-  # Job 2: TEST-DEPLOY - Downloads artifact, runs inference validation, and promotes
+  # Job 2: TEST-DEPLOY (Remains unchanged, relies on the artifact)
   test-deploy:
     runs-on: ubuntu-latest
-    needs: build-model # CRITICAL: This job waits until the 'build-model' job succeeds.
+    needs: build-model 
     
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        
-      # --- Download Artifact (Retrieving the Model) ---
       - name: Download Model Artifact
         uses: actions/download-artifact@v4
         with:
           name: model
           path: model/ 
-          
-      # --- Setup Environment for Testing ---
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       - name: Install Test Dependencies
         run: pip install pandas joblib mlflow scikit-learn xgboost numpy opentelemetry-exporter-otlp-proto-http
-
-      # --- Execute Validation Test and Deployment ---
       - name: Execute Inference Test and Deployment
-        # Runs the new script that validates the downloaded artifact and promotes it.
         run: python go/python-files/test_inference_and_deploy.py
