@@ -101,10 +101,8 @@ def finalize_deployment():
         print("FATAL ERROR: TRAINING_RUN_ID environment variable not set. Cannot deploy.")
         sys.exit(1)
         
-    # Skip the unreliable experiment search and use the RUN ID directly
-    # 1. Register Best Model
-    # model_uri now uses the RUN ID directly
-    model_uri = "runs:/{run_id}/{artifact_path}".format(run_id=run_id, artifact_path=ARTIFACT_PATH)
+# NEW, corrected URI (Points to the local directory where the files were downloaded):
+    model_uri = f"file://{os.getcwd()}/{ARTIFACT_FOLDER}"
     
     try:
         model_details = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
