@@ -74,6 +74,18 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Download Model Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: model
+          path: model/ 
+          
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'  
+
       # Save Python dependencies from cache
       # This step checks if the dependencies defined in requirements.txt have been installed before.
       - name: Cache Pip Dependencies
@@ -87,15 +99,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Download Model Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: model
-          path: model/ 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+      
 
       # Install the dependencies from the requirements file
       - name: Install Test Dependencies
