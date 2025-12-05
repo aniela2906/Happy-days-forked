@@ -253,7 +253,7 @@ def train_and_select_model(data, artifacts_dir):
     xgboost_model.save_model(xgboost_model_path)
     model_results[xgboost_model_path] = classification_report(y_train, y_pred_train_xgb, output_dict=True)
 
-    # --- Logistic Regression (LR) Training and MLflow Logging ---
+# --- Logistic Regression (LR) Training and MLflow Logging ---
     print("\n--- Training Logistic Regression (MLflow) ---")
     experiment_id = mlflow.get_experiment_by_name(experiment_name).experiment_id
     
@@ -272,6 +272,9 @@ def train_and_select_model(data, artifacts_dir):
         best_model_lr = model_grid_lr.best_estimator_
         y_pred_test_lr = model_grid_lr.predict(X_test)
         
+        # Capture the first 5 rows of the feature data (X_train)
+        input_example = X_train.head(5) 
+        
         # Log artifacts (including the models and data)
         mlflow.log_metric('f1_score', f1_score(y_test, y_pred_test_lr))
         mlflow.log_artifacts(artifacts_dir, artifact_path=ARTIFACT_PATH) # Log all generated artifacts
@@ -281,7 +284,12 @@ def train_and_select_model(data, artifacts_dir):
         joblib.dump(value=model_lr, filename=lr_model_path)
             
         # Custom python model for predicting probability (for MLflow model registry)
-        mlflow.pyfunc.log_model(ARTIFACT_PATH, python_model=lr_wrapper(best_model_lr))
+        mlflow.pyfunc.log_model(
+            ARTIFACT_PATH, 
+            python_model=lr_wrapper(best_model_lr),
+            # CRITICAL FIX: Pass the input example to auto-infer the model signature
+            input_example=input_example
+        )
         
         model_classification_report = classification_report(y_test, y_pred_test_lr, output_dict=True)
         model_results[lr_model_path] = model_classification_report
