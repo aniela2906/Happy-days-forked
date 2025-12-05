@@ -77,6 +77,21 @@ class lr_wrapper(mlflow.pyfunc.PythonModel):
 def process_data(data_path, artifacts_dir):
     print("--- Starting Data Processing Stage ---")
 
+    print("--- Starting Data Processing Stage ---")
+
+    # --- ADDED DEBUGGING BLOCK ---
+    print(f"DEBUG: INPUT_DIR set to: {INPUT_DIR}")
+    print(f"DEBUG: ARTIFACTS_DIR set to: {ARTIFACTS_DIR}")
+    print(f"DEBUG: Looking for data at: {DATA_PATH}")
+    
+    # Critical File Check
+    if not os.path.exists(DATA_PATH):
+        # This will print the exact reason for the failure inside the Dagger log
+        print(f"FATAL ERROR: Data file not found at expected path: {DATA_PATH}")
+        # Reraise a specific error or exit to ensure the job fails clearly
+        raise FileNotFoundError(f"Required data file is missing: {DATA_PATH}")
+    # --- END DEBUGGING BLOCK ---
+
     os.makedirs(artifacts_dir, exist_ok=True)
     data = pd.read_csv(data_path)
     
