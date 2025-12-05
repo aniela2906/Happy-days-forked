@@ -1,4 +1,4 @@
-name: Decoupled Train/Test Pipeline
+name: MlOps Pipeline
 
 on:
   push:
