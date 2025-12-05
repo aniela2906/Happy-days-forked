@@ -10,7 +10,7 @@ import pandas as pd
 import joblib
 from sklearn.metrics import accuracy_score 
 from mlflow.tracking.client import MlflowClient
-from mlflow.entities.model_registry.model_version.status import ModelVersionStatus
+from mlflow.entities.model_registry.model_version_status import ModelVersionStatus
 from xgboost import XGBRFClassifier # Needed to load XGBoost model
 import numpy as np
 
