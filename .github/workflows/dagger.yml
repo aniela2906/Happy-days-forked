@@ -1,4 +1,4 @@
-name: Train/Test Pipeline
+name: Decoupled Train/Test Pipeline
 
 on:
   push:
@@ -25,6 +25,7 @@ jobs:
           python-version: '3.12'
       - name: Install DVC and Dependencies (SHELL)
         run: pip install dvc
+
       - name: DVC Pull Data and Copy to Dagger Source
         working-directory: notebooks/
         run: |
@@ -37,12 +38,16 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22' 
+
       - name: Install Dagger CLI
-        run: go install dagger.io/dagger/cmd/dagger@latest
+        # FINAL FIX: Use shell script to install binary and manually add its location to the PATH.
+        run: |
+          curl -L https://dl.dagger.io/dagger/install.sh | sh
+          echo "$HOME/.dagger/bin" >> $GITHUB_PATH
 
       - name: Execute Dagger Training Pipeline (Build Artifact)
         working-directory: go/
-        # This runs the simplified train_model.py
+        # This executes the Go program, which runs train_model.py, saves artifacts, and logs.
         run: |
           go mod tidy
           dagger call build
@@ -52,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: model
-          path: go/model/ # The artifact created by the Dagger run
+          path: go/model/ 
 
   # Job 2: TEST-DEPLOY - Downloads artifact, runs inference validation, and promotes
   test-deploy:
@@ -68,7 +73,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: model
-          path: model/ # Downloads the artifact to a new local folder named 'model'
+          path: model/ 
           
       # --- Setup Environment for Testing ---
       - name: Setup Python
@@ -77,7 +82,6 @@ jobs:
           python-version: '3.12'
 
       - name: Install Test Dependencies
-        # Install all dependencies needed for inference and deployment logic
         run: pip install pandas joblib mlflow scikit-learn xgboost numpy opentelemetry-exporter-otlp-proto-http
 
       # --- Execute Validation Test and Deployment ---
