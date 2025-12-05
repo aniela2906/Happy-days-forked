@@ -249,7 +249,7 @@ def train_and_select_model(data, artifacts_dir):
         mlflow.log_artifacts(artifacts_dir, artifact_path=ARTIFACT_PATH) 
         mlflow.log_param("data_version", "00000")
         
-        joblib.dump(value=model_lr, filename=lr_model_path)
+        joblib.dump(value=best_model_lr, filename=lr_model_path)
             
         mlflow.pyfunc.log_model(
             ARTIFACT_PATH, 
