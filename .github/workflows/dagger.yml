@@ -1,60 +1,86 @@
-name: Run Dagger pipeline
+name: Train/Test Pipeline
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allows manual trigger, as per instructions
+    paths:
+      - 'go/**' # Workflow runs only when core code changes
+      - '.github/workflows/**'
+  workflow_dispatch:
 
 jobs:
-  dagger:
-    name: Run Dagger pipeline
+  # Job 1: BUILD-MODEL - Trains the model and uploads the artifact
+  build-model:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        
-      # --- DVC AND PYTHON SETUP ON THE GA RUNNER (SHELL) ---
       
-      - name: Setup Python on Runner
+      # --- Setup & Data Staging ---
+      - name: Setup Python & Install DVC
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       - name: Install DVC and Dependencies (SHELL)
-        run: |
-          pip install dvc
-
+        run: pip install dvc
       - name: DVC Pull Data and Copy to Dagger Source
-        working-directory: notebooks/ # We run from the DVC root
+        working-directory: notebooks/
         run: |
-          # 1. Execute DVC pull
           dvc pull
-
-          # 2. Copy the pulled data from the DVC artifact folder (notebooks/artifacts)
-          #    to the Dagger source folder (go/python-files/artifacts)
           mkdir -p ../go/python-files/artifacts
           cp -r artifacts/. ../go/python-files/artifacts/
 
-      # --- DAGGER EXECUTION (Using the Official Action) ---
-
-      - name: Run Dagger Pipeline
-        # This action handles Dagger CLI installation and PATH configuration
-        uses: dagger/dagger-for-github@v8.2.0 
+      # --- Dagger Execution (Build Phase) ---
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          workdir: go
-          verb: run
-          args: go run pipeline.go # Executes your main Go program
-          version: "0.19.6" # Use the specified version or 'latest'
-          
-      # --- FINAL ARTIFACT UPLOAD (CRITICAL REQUIREMENT) ---
+          go-version: '1.22' 
+      - name: Install Dagger CLI
+        run: go install dagger.io/dagger/cmd/dagger@latest
 
-      # The dagger action successfully ran pipeline.go, which created the 'go/model' folder.
-      # We now upload that folder.
+      - name: Execute Dagger Training Pipeline (Build Artifact)
+        working-directory: go/
+        # This runs the simplified train_model.py
+        run: |
+          go mod tidy
+          dagger call build
+          
+      # --- Upload Artifact (DELIVERY) ---
       - name: Upload Model Artifact
         uses: actions/upload-artifact@v4
         with:
           name: model
-          path: go/model/ # Path must be relative to the repo root
-          if-no-files-found: error
+          path: go/model/ # The artifact created by the Dagger run
+
+  # Job 2: TEST-DEPLOY - Downloads artifact, runs inference validation, and promotes
+  test-deploy:
+    runs-on: ubuntu-latest
+    needs: build-model # CRITICAL: This job waits until the 'build-model' job succeeds.
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      # --- Download Artifact (Retrieving the Model) ---
+      - name: Download Model Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: model
+          path: model/ # Downloads the artifact to a new local folder named 'model'
+          
+      # --- Setup Environment for Testing ---
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Test Dependencies
+        # Install all dependencies needed for inference and deployment logic
+        run: pip install pandas joblib mlflow scikit-learn xgboost numpy opentelemetry-exporter-otlp-proto-http
+
+      # --- Execute Validation Test and Deployment ---
+      - name: Execute Inference Test and Deployment
+        # Runs the new script that validates the downloaded artifact and promotes it.
+        run: python go/python-files/test_inference_and_deploy.py
