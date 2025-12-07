@@ -361,7 +361,7 @@ if __name__ == "__main__":
         experiment_name, run_id = train_and_select_model(data_frame, ARTIFACTS_DIR)
         
         # 3. Model Selection and Deployment
-        model_selection_and_deploy(experiment_name)
+        model_selection_and_deploy(experiment_name, run_id)
         
         print("Dagger Pipeline (train_model.py) finished successfully.")
 
