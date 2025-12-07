@@ -281,7 +281,7 @@ def train_and_select_model(data, artifacts_dir):
         mlflow.log_param("data_version", "00000")
         
         # Store model for model interpretability (as in notebook)
-        joblib.dump(value=model_lr, filename=lr_model_path)
+        joblib.dump(value=best_model_lr, filename=lr_model_path)
             
         # Custom python model for predicting probability (for MLflow model registry)
         mlflow.pyfunc.log_model(
