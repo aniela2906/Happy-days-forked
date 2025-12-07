@@ -13,7 +13,7 @@ jobs: # <-- Main jobs block
   
   # Job 1: BUILD-DEPLOY (ID used for dependencies)
   build-deploy: # <-- CORRECTED ID (Was 'dagger', now matches 'needs' in job 2)
-    name: Build and Deploy Model
+    name: Build-Model
     runs-on: ubuntu-latest
 
     outputs:
