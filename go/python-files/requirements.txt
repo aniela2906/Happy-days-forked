@@ -7,7 +7,4 @@ mlflow
 joblib
 scipy
 
-# ... other packages (pandas, xgboost, etc.)
-opentelemetry-exporter-otlp-proto-http
-
 # Add any other missing libraries if they appear later
