@@ -105,5 +105,5 @@ jobs: # <-- Main jobs block
           path: model/ 
 
       # 3. Execute Strict Inference Test
-      - name: Execute Strict Inference Test
-        run: python model/artifacts/test_inference.py
+      - name: Execute Inference Test
+        run: python go/artifacts/test_inference.py
