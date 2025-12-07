@@ -106,4 +106,4 @@ jobs: # <-- Main jobs block
 
       # 3. Execute Strict Inference Test
       - name: Execute Inference Test
-        run: python go/artifacts/test_inference.py
+        run: python go/python-files/test_inference.py
