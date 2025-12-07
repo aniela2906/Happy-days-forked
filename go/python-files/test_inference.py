@@ -46,11 +46,11 @@ def run_inference_test():
         print("Model is non-reproducible. Check training script.", file=sys.stderr)
         sys.exit(1) # Fail the job if the test fails
 
-    print("INFERENCE TEST PASSED: Outputs match expectations.")
+    print("✅ INFERENCE TEST PASSED: Outputs match expectations.")
     
     # Optional performance check
     test_accuracy = accuracy_score(y_test, lr_model.predict(X_test))
-    print(f"INFO: Full Test Set Accuracy: {test_accuracy:.4f}")
+    print(f"✅ INFO: Full Test Set Accuracy: {test_accuracy:.4f}")
     
     return True
 
