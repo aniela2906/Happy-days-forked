@@ -301,10 +301,14 @@ def train_and_select_model(data, artifacts_dir):
         with open(os.path.join(artifacts_dir, "model_results.json"), 'w+') as results_file:
             json.dump(model_results, results_file)
         
+        Write Run ID to a file for the CI/CD job linkage
+        with open(os.path.join(artifacts_dir, "mlflow_run_id.txt"), "w") as f:
+            f.write(run.info.run_id)
+        
         print("--- Model Training Stage Complete ---")
         return experiment_name, run.info.run_id
 
-def model_selection_and_deploy(experiment_name):
+def model_selection_and_deploy(experiment_name,run_id):
     print("\n--- Starting Model Selection and Deployment Stage ---")
     
     # 1. Get Best Run
