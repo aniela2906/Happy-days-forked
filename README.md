@@ -1,78 +1,36 @@
 # ITU BDS MLOPS'25 - Project
 
-## Task
+## Chronological flow of our MLOps pipeline
 
-Based on the input provided (see below), fork the repository and restructure the code to adhere to the concepts and ideas you have seen throughout the course.  The diagram below provides a detailed overview of the structure that the solution is expected to follow.   
+### Phase 1: Initiation and data preparation 
 
-![Project architecture](./docs/project-architecture.png)
+the process begins when Github Actions Workflow is triggered.
 
-For the exam submission, we expect you to submit a pdf containing:
-- the list of members of the group
-- the link to the github.com public repository hosting your solution
-  - following the above, there is *no need* to invite the teaching staff as collaborators
+The build-deploy job starts on Github hosted runner.
 
-The repository linked in the submission should contain:
+The runner then executes a dvc pull to download the actual training data file from the dvc demote store into the notebooks/artifacts folder. The runner makes a copy of the raw_data.csv into the Dagger input directory go/python-files/artifacts
 
-- A README.md file that describes the project
-- GitHub automation workflow
-- Dagger workflow (in Go)
-- All history
+The runner then executes the dagger run go run pipeline.go command, handing control over to the Dagger CLI.
 
+### Phase 2: Training and Artifcat Creation (Dagger container)
 
-## Inputs
+The execution now moves inside the Docker environment defined by our pipeline.go script.
 
-You are given the following material:
-- Python monolith (see `notebooks` folder)
-- Raw input data (see `notebooks/artifacts` folder)
-- GitHub action to test model inference (see [`model-validator`](https://github.com/lasselundstenjensen/itu-sdse-project-model-validator) action)
+The dagger engine starts, pulls the base Python image and mounts our go/python-files to the container's working directory.
 
-## Outputs
+It then executes install some dependencies from requirements.txt and executes the training script train_model.py
 
-- Your GitHub repository (including all history)
-  - A README.md file that describes the project
-  - GitHub automation workflow
-  - Dagger workflow (in Go)
-- Model artifact produced by GitHub workflow and named 'model'
+The python script reads the staged data file and throught the script, calls to MLflow to log the metadata, metrics, parameters, the generated model files to the MLflow artifact store.
 
-> **NOTE:**
-> The Dagger workflow can be run locally or inside the GitHub workflow—both are viable options during development.
->
-> The Dagger workflow can run locally and can also be made to produce outputs locally during development. But when wrapping the Dagger workflow in a GitHub workflow, the output is instead stored inside the GitHub runner (i.e. a virtual machine).
->
-> Use the publicly available [`actions/upload-artifact`](https://github.com/actions/upload-artifact) to store the model artifact in the GitHub worklow pipeline.
->
-> This model artifact can then be picked up by the [action provided](https://github.com/lasselundstenjensen/itu-sdse-project-model-validator), which will run some inference tests to ensure that the correct model was trained.
+The script writes the final run id and stores it in mflow_run_id.txt and exports the artifacts.
 
+### Phase 3: Inference validation test and finalization
 
-## How will we assess
+The control returns to the Github runner to finalize the first job and execute the second job which is inference-test.
 
-Below, we provide information on how we will assess the submission clustered around several aspects.  The list relates to groups of size 3; if your group is of size 4, you are expected also to work on the optional items, i.e., to use pull requests and to provide tests.
+As the build-deploy job completes succesfully, the test-inference job starts.
 
-#### Versioning
+The runner downloads the model artifact from Github's storage into its local directory.
+Then it executes the test_inference.py script to validate the generated artifacts.
 
-- Use of Git (semantic commit messages, branches, branch longevity, commit frequency/size)
-- Management of data
-- Use of pull requests (OPTIONAL)
-
-#### Programming
-
-- Decomposition of Python notebook
-- Adherance to standard data science MLOps project structure
-- Presence of tests (OPTIONAL)
-
-#### Workflow automation
-
-- Presence of a workflow that trains the model
-- Presence of a workflow that tests the model
-- Structure of Dagger workflow
-- Orchestration of Dagger workflow through GitHub workflow
-
-#### Documentation (README.md)
-
-- Description of project structure
-- How to run the code and generate the model artifact
-
-
-## Questions
-
-If you have any questions about the information shared here, please feel free to post them on Learnit. Answers to private emails on this topic will also be shared on Learnit, along with the original email content, so that everyone has access to the same information.
+The test-inference job reports either succes or failure, and the entire MLops pipeline workflow finishes. 
