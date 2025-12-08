@@ -4,7 +4,7 @@
 
 ### Phase 1: Initiation and data preparation 
 
-the process begins when Github Actions Workflow is triggered.
+The process begins when Github Actions Workflow is triggered.
 
 The build-deploy job starts on Github hosted runner.
 
