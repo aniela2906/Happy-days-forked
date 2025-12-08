@@ -37,4 +37,4 @@ As the build-deploy job completes succesfully, the test-inference job starts.
 The runner downloads the model artifact from Github's storage into its local directory.
 Then it executes the test_inference.py script to validate the generated artifacts.
 
-The test-inference job reports either succes or failure, and the entire MLops pipeline workflow finishes. 
+The test-inference job reports either success or failure, and the entire MLops Pipeline Workflow finishes. 
