@@ -12,6 +12,8 @@ The runner then executes a dvc pull to download the actual training data file fr
 
 The runner then executes the dagger run go run pipeline.go command, handing control over to the Dagger CLI.
 
+
+
 ### Phase 2: Training and Artifcat Creation (Dagger container)
 
 The execution now moves inside the Docker environment defined by our pipeline.go script.
@@ -23,6 +25,8 @@ It then executes install some dependencies from requirements.txt and executes th
 The python script reads the staged data file and throught the script, calls to MLflow to log the metadata, metrics, parameters, the generated model files to the MLflow artifact store.
 
 The script writes the final run id and stores it in mflow_run_id.txt and exports the artifacts.
+
+
 
 ### Phase 3: Inference validation test and finalization
 
