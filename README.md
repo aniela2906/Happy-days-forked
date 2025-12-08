@@ -16,7 +16,7 @@ The runner then executes the dagger run go run pipeline.go command, handing cont
 
 ### Phase 2: Training and Artifcat Creation (Dagger container)
 
-The execution now moves inside the Docker environment defined by our pipeline.go script.
+The execution now moves inside the Docker containerized environment defined by our pipeline.go script. Our go script is the core execution engine for the first half of our MLops Pipeline (Build-model phase). It's purpose is to define and execute the entire training and tracking process.
 
 The dagger engine starts, pulls the base Python image and mounts our go/python-files to the container's working directory.
 
