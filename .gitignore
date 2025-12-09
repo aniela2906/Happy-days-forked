@@ -5,15 +5,24 @@
 __pycache__/
 .ipynb_checkpoints/
 
-# MLflow runs 
+# MLflow runs
 mlruns/
 
-# model artifacts - DO NOT TRACK
-artifacts/*.json
-artifacts/*.csv
-artifacts/*.ubj
+# MODEL FILES 
 artifacts/*.pkl
-artifacts/*.txt
+artifacts/*.ubj
+artifacts/*model*.json
+
+# DO NOT IGNORE metrics and config
+!artifacts/model_selection.json
+!artifacts/xgboost_metrics.json
+!artifacts/lr_metrics.json
+!artifacts/date_limits.json
+!artifacts/columns_list.json
+
+# Only ignore heavy artifacts
+artifacts/raw_data.csv
+artifacts/train_data_gold.csv
 
 # DVC cache 
 .dvc/tmp/

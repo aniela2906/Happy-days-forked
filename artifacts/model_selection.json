@@ -1,0 +1,7 @@
+{
+    "best_model": "logistic_regression",
+    "best_f1": 0.7818136117037215,
+    "best_run_id": "209ab595325c40e5ab956d59adb221e6",
+    "xgb_f1": 0.7712608331003634,
+    "lr_f1": 0.7818136117037215
+}
