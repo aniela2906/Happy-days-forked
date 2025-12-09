@@ -1,0 +1,23 @@
+# virtual environment
+.venv/
+
+# python cache
+__pycache__/
+.ipynb_checkpoints/
+
+# MLflow runs 
+mlruns/
+
+# model artifacts - DO NOT TRACK
+artifacts/*.json
+artifacts/*.csv
+artifacts/*.ubj
+artifacts/*.pkl
+artifacts/*.txt
+
+# DVC cache 
+.dvc/tmp/
+.dvc/cache/
+
+# VSCode settings 
+.vscode/
